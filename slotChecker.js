@@ -1,11 +1,9 @@
-// slotChecker.js
 const axios = require("axios");
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const VENUE_ID = "1"; // Update if needed
-const DATE = "2025-08-10"; // Change to next Sunday or make dynamic
-const CHECK_SLOTS = ["08:00-09:00", "09:00-10:00"]; // You can update this
+const VENUE_ID = process.env.VENUE_ID || "1";
+const DATE = process.env.BOOKING_DATE; // Dynamic date
 
 async function fetchSlotData() {
   try {
@@ -32,23 +30,28 @@ async function sendTelegramMessage(message) {
 }
 
 async function main() {
+  if (!DATE) {
+    console.error("❌ BOOKING_DATE is required as an environment variable.");
+    return;
+  }
+
   const data = await fetchSlotData();
   if (!data || !data.Result) {
     console.log("No booking data available.");
     return;
   }
 
-  const foundSlot = Object.values(data.Result).some((court) => {
+  const anyAvailable = Object.values(data.Result).some((court) => {
     return (court.court_available_slots || []).some((slot) => {
-      const [time, isAvailable] = slot.split("|");
-      return CHECK_SLOTS.includes(time) && isAvailable === "1";
+      const [_, isAvailable] = slot.split("|");
+      return isAvailable === "1";
     });
   });
 
-  if (foundSlot) {
-    await sendTelegramMessage(`🏸 Slot available on ${DATE} at venue ${VENUE_ID}!`);
+  if (anyAvailable) {
+    await sendTelegramMessage(`🏸 Slots are available on ${DATE} at venue ${VENUE_ID}!`);
   } else {
-    console.log("No matching slots available.");
+    console.log("No available slots found.");
   }
 }
 
