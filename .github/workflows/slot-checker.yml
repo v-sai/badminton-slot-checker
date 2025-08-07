@@ -1,9 +1,15 @@
 name: 🏸 Check Badminton Slots
 
 on:
-  schedule:
-    - cron: "*/30 * * * *" # every 30 minutes
   workflow_dispatch:
+    inputs:
+      booking_date:
+        description: "Date to check (YYYY-MM-DD)"
+        required: true
+      venue_id:
+        description: "Venue ID"
+        required: false
+        default: "1"
 
 jobs:
   check-slots:
@@ -24,4 +30,6 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BOOKING_DATE: ${{ github.event.inputs.booking_date }}
+          VENUE_ID: ${{ github.event.inputs.venue_id }}
         run: node slotChecker.js
